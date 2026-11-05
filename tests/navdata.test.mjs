@@ -76,6 +76,15 @@ test('scan is read-only; install creates complete runtime data, backup and no du
     assert.equal((await readdir(f.backupDir)).length, 1);
 });
 
+test('Fenix runtime schema 11 supports scanning and installation', async t => {
+    const f = await fixture(t);
+    edit(f.file, db => db.exec('UPDATE ps_runtime_metadata SET schema_version=11'));
+    assert.equal(check(f).state, 'missing');
+    const result = await install(f);
+    assert.equal(result.success, true, result.message);
+    assert.equal(check(f).state, 'installed');
+});
+
 test('find-or-create completes partial data without duplicating matching records', async t => {
     const f = await fixture(t);
     assert.equal((await install(f)).success, true);
@@ -132,7 +141,7 @@ test('a mid-write SQLite error rolls back every inserted record', async t => {
 
 test('unsupported schema, missing dependencies, corrupt files and unsupported platforms are reported', async t => {
     const f = await fixture(t);
-    edit(f.file, db => db.exec('UPDATE ps_runtime_metadata SET schema_version=10'));
+    edit(f.file, db => db.exec('UPDATE ps_runtime_metadata SET schema_version=8'));
     assert.equal(check(f).state, 'unsupported');
     assert.equal((await install(f)).success, false);
     edit(f.file, db => db.exec("UPDATE ps_runtime_metadata SET schema_version=9; DELETE FROM tbl_pg_runways WHERE runway_identifier='RW09'"));
