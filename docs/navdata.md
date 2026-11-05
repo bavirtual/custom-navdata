@@ -11,7 +11,7 @@ See [architecture.md](architecture.md) for the code map and application data flo
 - `src/navdata/packages/gibraltar.ts`: Fenix content from the supplied Python implementation; no SQL.
 - `src/navdata/packages/gibraltar-fslabs.ts`: normalized FSLabs content converted from the supplied CSV files; no SQL.
 - `src/navdata/adapter.ts`: `PlatformAdapter.plan(database, package)` returns keyed records without writing. Adapters validate schemas and resolve database references. An optional value comparator handles fixed-width padding.
-- `src/navdata/adapters/fenix-dfd.ts`: Fenix DFD runtime schema 9, including runtime lookup tables.
+- `src/navdata/adapters/fenix-dfd.ts`: Fenix DFD runtime schema 9 or later, including runtime lookup tables.
 - `src/navdata/adapters/fslabs.ts`: FSLabs WAYPOINT, VHF_NAVAID, AIRPORT_PROCEDURE and both flight-planning continuation tables.
 - `src/navdata/adapters/fenix/` and `src/navdata/adapters/fslabs/`: focused schema/context, waypoint, navaid and procedure planning modules used by the adapter entry points.
 - `src/navdata/service.ts`: common record comparison, find-or-create, SQLite backup, transactions, and verification.
