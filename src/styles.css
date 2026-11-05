@@ -2,6 +2,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; }
 .brand-bar { height: 68px; padding: 0 36px; display: flex; align-items: center; gap: 20px; background: #10223e; color: white; border-bottom: 3px solid #c83b52; }
+.brand-icon { width: 36px; height: 36px; }
 .brand { font-size: 23px; font-weight: 750; letter-spacing: -.7px; }
 .brand-divider { width: 1px; height: 22px; background: #52617a; }
 .brand-product { color: #c4cedd; font-size: 13px; }
