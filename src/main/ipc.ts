@@ -1,14 +1,22 @@
 import { app, ipcMain } from 'electron';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { discoverDatabases } from '../discovery.js';
+import { discoverDatabases, reloadDatabase } from '../discovery.js';
 import { navDataService } from '../navdata/registry.js';
 import type { InstallResult } from '../navdata/types.js';
 import { parseInstallRequest, resolveInstallationTarget } from './installation-target.js';
+import { isPlatformId } from '../shared/platforms.js';
 import { rendererHtml } from './paths.js';
 
 export function registerIpcHandlers(): void {
     ipcMain.handle('navdata:scan', () => discoverDatabases());
+    ipcMain.handle('navdata:reload', (event, platformId: unknown, databasePath: unknown) => {
+        if (event.senderFrame !== event.sender.mainFrame || event.senderFrame.url !== pathToFileURL(rendererHtml).href ||
+            !isPlatformId(platformId) || typeof databasePath !== 'string') {
+            throw new Error('Invalid reload request.');
+        }
+        return reloadDatabase(platformId, databasePath);
+    });
     ipcMain.handle('navdata:packages', () => navDataService.packages.map(({ id, name, version, description }) => ({
         id,
         name,

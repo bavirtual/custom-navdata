@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'">
     <title>BAVirtual Custom Nav Data</title>
+    <link rel="icon" href="images/logo.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="brand-bar"><span class="brand">BAVirtual</span></div>
+    <div class="brand-bar"><img class="brand-icon" src="images/logo.svg" alt=""><span class="brand">BAVirtual</span></div>
     <main>
         <header><div><h1>Custom Nav Data</h1></div><button id="refresh" type="button">Rescan Databases</button></header>
         <div class="package-picker"><label for="data-package">Custom data package</label><select id="data-package" disabled><option>Loading packages…</option></select><p id="package-description"></p><p class="install-note">Close Fenix, FSLabs and any navdata updater before inserting. A backup is created automatically.</p></div>
@@ -24,7 +25,7 @@
             <p id="location" class="location"></p>
             <p id="status" role="status" aria-live="polite">Ready to scan.</p>
             <div class="table-wrap"><table id="database-table" hidden>
-                <thead><tr><th>System</th><th>File</th><th>Size</th><th>Last modified</th><th>Custom data</th><th>Action</th></tr></thead>
+                <thead><tr><th>File</th><th>AIRAC</th><th>Last modified</th><th>Custom data</th><th>Actions</th></tr></thead>
                 <tbody id="files"></tbody>
             </table></div>
         </section>

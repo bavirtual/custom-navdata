@@ -12,7 +12,9 @@ if (squirrelStartup) {
         reload(import.meta, { ignore: [/\.(?:c|m)?ts$/, 'package-lock.json'] });
     }
     app.whenReady().then(() => {
-        app.setAppUserModelId('com.squirrel.bavirtual_custom_navdata.BAVirtualCustomNavData');
+        app.setAppUserModelId(app.isPackaged
+            ? 'com.squirrel.bavirtual_custom_navdata.BAVirtualCustomNavData'
+            : 'BAVirtual.CustomNavData.Dev');
         registerIpcHandlers();
         createWindow();
         startAutomaticUpdates();

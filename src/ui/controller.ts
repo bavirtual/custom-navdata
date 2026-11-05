@@ -11,6 +11,7 @@ export class NavDataController {
         results: [],
         packages: [],
         scanning: false,
+        reloadingPaths: new Set(),
         installingPath: null,
         feedback: null
     };
@@ -19,11 +20,13 @@ export class NavDataController {
             selectPlatform: id => this.selectPlatform(id),
             selectPackage: id => this.selectPackage(id),
             scan: () => { void this.scan(); },
+            reload: (id, file) => { void this.reload(id, file); },
             install: request => { void this.install(request); }
         });
     }
 
     async initialize(): Promise<void> {
+        const scan = this.scan();
         try {
             this.state.packages = await this.api.packages();
             this.state.packageId = this.state.packages[0]?.id || '';
@@ -34,7 +37,8 @@ export class NavDataController {
                 message: 'Data packages could not be loaded. Restart the app and try again.'
             };
         }
-        await this.scan();
+        this.render();
+        await scan;
     }
 
     private selectPlatform(id: PlatformId): void {
@@ -48,6 +52,8 @@ export class NavDataController {
     }
 
     private async scan(): Promise<void> {
+        if (this.state.scanning || this.state.reloadingPaths.size)
+            return;
         this.state.scanning = true;
         this.render();
         try {
@@ -69,8 +75,37 @@ export class NavDataController {
         }
     }
 
+    private async reload(id: PlatformId, databasePath: string): Promise<void> {
+        const { reloadingPaths } = this.state;
+        const platform = this.state.results.find(result => result.id === id);
+        if (!platform?.files.some(file => file.path === databasePath) || this.state.scanning || this.state.installingPath || reloadingPaths.has(databasePath))
+            return;
+
+        reloadingPaths.add(databasePath);
+        this.state.feedback = null;
+        this.render();
+        try {
+            const updated = await this.api.reload(id, databasePath);
+            if (updated) {
+                platform.files = platform.files.map(file => file.path === databasePath ? updated : file);
+            }
+            else {
+                platform.files = platform.files.filter(file => file.path !== databasePath);
+                platform.message = `Database removed. ${platform.files.length} remaining.`;
+                this.state.feedback = { state: 'error', message: 'The database is no longer available. Rescan to check for replacement files.' };
+            }
+        }
+        catch {
+            this.state.feedback = { state: 'error', message: 'Unable to reload the database. Check access and try again.' };
+        }
+        finally {
+            reloadingPaths.delete(databasePath);
+            this.render();
+        }
+    }
+
     private async install(request: InstallRequest): Promise<void> {
-        if (this.state.installingPath || this.state.scanning)
+        if (this.state.installingPath || this.state.scanning || this.state.reloadingPaths.size)
             return;
         this.state.installingPath = request.databasePath;
         this.state.feedback = {

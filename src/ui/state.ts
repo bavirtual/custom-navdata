@@ -12,6 +12,7 @@ export interface RendererState {
     results: ScanResult[];
     packages: PackageInfo[];
     scanning: boolean;
+    reloadingPaths: Set<string>;
     installingPath: string | null;
     feedback: Feedback | null;
 }
@@ -20,6 +21,7 @@ export interface ViewActions {
     selectPlatform(id: PlatformId): void;
     selectPackage(id: string): void;
     scan(): void;
+    reload(platformId: PlatformId, databasePath: string): void;
     install(request: InstallRequest): void;
 }
 

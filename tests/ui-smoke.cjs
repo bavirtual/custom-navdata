@@ -19,6 +19,11 @@ app.whenReady().then(async () => {
     const called = new Set();
     ipcMain.handle('navdata:packages', () => navDataService.packages.map(({id,name,version,description})=>({id,name,version,description})));
     ipcMain.handle('navdata:scan', () => results);
+    ipcMain.handle('navdata:reload', (_event, platformId, databasePath) => {
+        assert.equal(platformId, 'fenix');
+        assert.equal(databasePath, results[0].files[0].path);
+        return { ...results[0].files[0], airac: { cycle: '2611', revision: '005' } };
+    });
     // Exercise the renderer action without modifying an installed database.
     ipcMain.handle('navdata:install', (_event, request) => {
         assert.ok(['fenix','fslabs'].includes(request.platformId));
@@ -43,6 +48,14 @@ app.whenReady().then(async () => {
     assert.equal(ui.rows,3);
     assert.equal(ui.buttons,3);
     assert.equal(ui.package,'gibraltar');
+    await win.webContents.executeJavaScript(`document.querySelector('.reload-button').click()`);
+    await win.webContents.executeJavaScript(`new Promise((resolve,reject)=>{
+      const start=Date.now(); const timer=setInterval(()=>{
+        if(document.querySelector('.airac-cell').textContent.includes('Rev 005')){clearInterval(timer);resolve();}
+        else if(Date.now()-start>10000){clearInterval(timer);reject(new Error('AIRAC did not update after reloading'));}
+      },50);
+    })`);
+    assert.equal(await win.webContents.executeJavaScript(`document.querySelectorAll('#files tr').length`),3);
     const screenshot=path.join(app.getPath('temp'),'bav-navdata-ui.png');
     await writeFile(screenshot,(await win.capturePage()).toPNG());
     await win.webContents.executeJavaScript(`document.querySelector('.insert-button').click()`);

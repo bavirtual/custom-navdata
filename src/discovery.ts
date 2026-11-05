@@ -1,15 +1,15 @@
 import { platformLocations, type PlatformLocation } from './discovery/locations.js';
 import { scanDirectory as scanPlatformDirectory } from './discovery/scan-directory.js';
-import { navDataService } from './navdata/registry.js';
-import type { ScanResult } from './shared/api.js';
+import { inspectDatabase } from './discovery/inspect-database.js';
+import type { DatabaseFile, ScanResult } from './shared/api.js';
 
 export { readFslabsPath } from './discovery/locations.js';
 export type { DatabaseFile, ScanResult } from './shared/api.js';
 /** Public scan entry point: attach the registered package inspector to filesystem discovery. */
-export function scanDirectory(id: ScanResult['id'], name: string, location: string, extension: string): Promise<ScanResult> {
-    return scanPlatformDirectory(id, name, location, extension, (platform, file) => navDataService.inspect(platform, file));
+export function scanDirectory(id: ScanResult['id'], name: string, location: string, extension: string, databasePath?: string): Promise<ScanResult> {
+    return scanPlatformDirectory(id, name, location, extension, inspectDatabase, databasePath);
 }
-async function discoverPlatform(platform: PlatformLocation): Promise<ScanResult> {
+async function discoverPlatform(platform: PlatformLocation, databasePath?: string): Promise<ScanResult> {
     const base = {
         id: platform.id,
         name: platform.name,
@@ -19,7 +19,7 @@ async function discoverPlatform(platform: PlatformLocation): Promise<ScanResult>
     try {
         const location = await platform.resolve();
         if (location)
-            return scanDirectory(platform.id, platform.name, location, platform.extension);
+            return scanDirectory(platform.id, platform.name, location, platform.extension, databasePath);
         return {
             ...base,
             status: 'unavailable',
@@ -36,5 +36,15 @@ async function discoverPlatform(platform: PlatformLocation): Promise<ScanResult>
 }
 
 export function discoverDatabases(): Promise<ScanResult[]> {
-    return Promise.all(platformLocations.map(discoverPlatform));
+    return Promise.all(platformLocations.map(platform => discoverPlatform(platform)));
+}
+
+export async function reloadDatabase(platformId: ScanResult['id'], databasePath: string): Promise<DatabaseFile | null> {
+    const platform = platformLocations.find(platform => platform.id === platformId);
+    if (!platform)
+        throw new Error('Unknown platform.');
+    const result = await discoverPlatform(platform, databasePath);
+    if (result.status === 'error')
+        throw new Error(result.message);
+    return result.files[0] ?? null;
 }

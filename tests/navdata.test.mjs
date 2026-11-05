@@ -201,3 +201,40 @@ test('the shared service can use a different platform adapter', async t => {
     assert.equal((await api.install('fslabs',f.file,'gibraltar',f.backupDir)).success,true);
     assert.equal(api.inspect('fslabs',f.file)[0].state,'installed');
 });
+
+test('FSLabs scans sort filenames numerically and targeted reload rereads AIRAC metadata', async t => {
+    const root = await mkdtemp(path.join(tmpdir(), 'bav-fslabs-scan-'));
+    t.after(() => rm(root, { recursive: true, force: true }));
+    const older = path.join(root, 'navdata-9.rom');
+    const newer = path.join(root, 'navdata-10.rom');
+    for (const file of [older, newer]) {
+        edit(file, db => db.exec(`
+            CREATE TABLE CYCLE_INFO (PARAMETER TEXT, VALUE TEXT);
+            INSERT INTO CYCLE_INFO VALUES ('CYCLE', '2610');
+        `));
+    }
+
+    const initial = await scanDirectory('fslabs', 'FSLabs', root, '.rom');
+    assert.deepEqual(initial.files.map(file => file.path), [newer, older]);
+    assert.equal(initial.files[0].airac.cycle, '2610');
+    assert.equal(initial.files[0].airac.revision, undefined);
+
+    edit(newer, db => db.exec(`
+        UPDATE CYCLE_INFO SET VALUE = '2611' WHERE PARAMETER = 'CYCLE';
+        INSERT INTO CYCLE_INFO VALUES ('SEQUENCE', '005');
+    `));
+    const refreshed = await scanDirectory('fslabs', 'FSLabs', root, '.rom', newer);
+    assert.deepEqual(refreshed.files.map(file => file.path), [newer]);
+    assert.equal(refreshed.files[0].airac.cycle, '2611');
+    assert.equal(refreshed.files[0].airac.revision, '005');
+});
+
+test('Fenix scans read cycle and revision from the DFD header', async t => {
+    const f = await fixture(t);
+    edit(f.file, db => db.exec(`
+        CREATE TABLE tbl_hdr_header (cycle TEXT, revision TEXT);
+        INSERT INTO tbl_hdr_header VALUES ('2611', '005');
+    `));
+    const result = await scanDirectory('fenix', 'Fenix', f.root, '.db3');
+    assert.deepEqual(result.files[0].airac, { cycle: '2611', revision: '005' });
+});
