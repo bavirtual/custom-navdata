@@ -39,10 +39,7 @@ th { background: #f7f9fc; color: #67768a; font-size: 10px; text-transform: upper
 th, td { padding: 13px 12px; border-bottom: 1px solid #e7ecf2; vertical-align: top; }
 td { line-height: 1.6; }
 tbody tr:hover { background: #f8fafd; }
-td:first-child { color: #244574; font-weight: 600; }
-td:nth-child(2) { font-weight: 600; }
-.size-cell { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.filename-cell { overflow-wrap: anywhere; }
+.filename-cell { color: #244574; font-weight: 600; overflow-wrap: anywhere; }
 .date-cell { color: #64748b; min-width: 100px; }
 .package-cell { min-width: 230px; max-width: 340px; }
 .package-state { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: #edf1f7; color: #53657d; }
@@ -65,3 +62,10 @@ td:nth-child(2) { font-weight: 600; }
 #operation-feedback[data-state="error"] { background: #fff0e4; color: #8a4d21; border-color: #eed7c4; }
 footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 22px; font-size: 11px; color: #718096; line-height: 1.6; }
 @media (max-width: 750px) { main { padding: 24px 20px; } .brand-bar { padding: 0 20px; } header { align-items: flex-start; flex-direction: column; gap: 18px; } section { padding: 20px; } footer { flex-direction: column; gap: 4px; } }
+
+.airac-cell { white-space: nowrap; font-weight: 650; font-variant-numeric: tabular-nums; }
+.airac-cell small { display: block; color: #64748b; font-size: 11px; font-weight: 400; }
+.action-cell button + button { margin-inline-start: 6px; }
+.reload-button { border: 1px solid #b9c6d8; border-radius: 5px; color: #193c70; background: white; padding: 8px 12px; font-size: 12px; }
+.reload-button:hover { background: #edf3fc; }
+.reload-button:disabled { opacity: .6; cursor: wait; }

@@ -31,22 +31,29 @@ function packageCell(check: PackageCheck | undefined): HTMLTableCellElement {
 
 function actionCell(file: DatabaseFile, platform: ScanResult, check: PackageCheck | undefined, state: RendererState, actions: ViewActions): HTMLTableCellElement {
     const element = cell('', 'action-cell');
-    if (check?.state !== 'missing') {
-        element.textContent = check?.state === 'installed' ? 'Up to date' : '—';
+    const reload = document.createElement('button');
+    const reloading = state.reloadingPaths.has(file.path);
+    reload.className = 'reload-button';
+    reload.type = 'button';
+    reload.textContent = reloading ? 'Reloading…' : '↻ Reload';
+    reload.setAttribute('aria-label', `Reload ${file.name}`);
+    reload.disabled = isBusy(state) || reloading;
+    reload.addEventListener('click', () => actions.reload(platform.id, file.path));
+    element.append(reload);
+    if (check?.state !== 'missing')
         return element;
-    }
     const button = document.createElement('button');
     button.className = 'insert-button';
     button.type = 'button';
     button.textContent = state.installingPath === file.path ? 'Inserting…' : 'Insert data';
-    button.disabled = isBusy(state);
+    button.disabled = isBusy(state) || state.reloadingPaths.size > 0;
     button.setAttribute('aria-label', `Insert ${check.name} into ${file.name}`);
     button.addEventListener('click', () => actions.install({
         databasePath: file.path,
         packageId: check.packageId,
         platformId: platform.id
     }));
-    element.appendChild(button);
+    element.prepend(button);
     return element;
 }
 
@@ -54,17 +61,22 @@ function databaseRow(file: DatabaseFile, platform: ScanResult, state: RendererSt
     const row = document.createElement('tr');
     const name = cell(file.name, 'filename-cell');
     name.title = file.path;
-    const size = (file.size / (1024 * 1024)).toLocaleString(undefined, { maximumFractionDigits: 1 });
     const check = file.packages.find(check => check.packageId === state.packageId);
-    row.append(cell(platform.name, 'system-cell'), name, cell(`${size} MB`, 'size-cell'), cell(new Date(file.modified).toLocaleString(), 'date-cell'), packageCell(check), actionCell(file, platform, check, state, actions));
+    const airac = cell(file.airac?.cycle ?? 'Unavailable', 'airac-cell');
+    if (file.airac?.revision) {
+        const detail = document.createElement('small');
+        detail.textContent = `Rev ${file.airac.revision}`;
+        airac.append(detail);
+    }
+    row.append(name, airac, cell(new Date(file.modified).toLocaleString(), 'date-cell'), packageCell(check), actionCell(file, platform, check, state, actions));
     return row;
 }
 
 export function renderDatabaseTable(table: HTMLElement, body: HTMLElement, state: RendererState, actions: ViewActions): void {
     const platform = state.results.find(result => result.id === state.platformId);
-    table.hidden = state.scanning || !platform?.files.length;
+    table.hidden = !platform?.files.length;
     body.replaceChildren();
-    if (state.scanning || !platform)
+    if (!platform)
         return;
     body.append(...platform.files.map(file => databaseRow(file, platform, state, actions)));
 }

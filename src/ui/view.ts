@@ -78,14 +78,14 @@ export function createNavDataView(): NavDataView {
             renderPackageSelector(state);
             const platform = getPlatform(state.platformId);
             const result = state.results.find(result => result.id === platform.id);
-            refresh.disabled = isBusy(state);
-            refresh.textContent = state.scanning ? 'Scanning…' : 'Rescan databases';
-            platformTitle.textContent = `${platform.name} databases`;
+            refresh.disabled = isBusy(state) || state.reloadingPaths.size > 0;
+            refresh.textContent = state.scanning ? 'Scanning…' : 'Rescan Databases';
+            platformTitle.textContent = `${platform.name} Databases`;
             fileType.textContent = platform.extension;
             platformDescription.textContent = 'Package status is checked in each database during scanning.';
             panel.setAttribute('aria-labelledby', `tab-${platform.id}`);
             location.textContent = result?.location || platform.locationHint;
-            status.textContent = state.scanning ? 'Scanning databases and checking custom data…' : result?.message || 'No scan results available.';
+            status.textContent = state.scanning ? 'Scanning Databases and checking custom data…' : result?.message || 'No scan results available.';
             status.dataset.state = state.scanning ? 'loading' : result?.status || 'error';
             feedback.hidden = !state.feedback;
             if (state.feedback) {
